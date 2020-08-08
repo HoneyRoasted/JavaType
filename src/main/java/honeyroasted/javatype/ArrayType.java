@@ -49,6 +49,16 @@ public class ArrayType extends JavaType {
     }
 
     @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder();
+        str.append(this.type);
+        for (int i = 0; i < this.dimensions; i++) {
+            str.append("[]");
+        }
+        return str.toString();
+    }
+
+    @Override
     public Class<?> getType() {
         return this.effectiveType;
     }

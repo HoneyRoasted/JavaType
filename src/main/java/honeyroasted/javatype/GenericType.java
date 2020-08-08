@@ -44,6 +44,25 @@ public class GenericType extends JavaType {
     }
 
     @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder();
+        str.append(this.type.getName());
+
+        if (!this.generics.isEmpty()) {
+            str.append("<");
+            for (int i = 0; i < this.generics.size(); i++) {
+                str.append(this.getGeneric(i));
+                if (i != this.generics.size() - 1) {
+                    str.append(", ");
+                }
+            }
+            str.append(">");
+        }
+
+        return str.toString();
+    }
+
+    @Override
     public Class<?> getType() {
         return this.type;
     }

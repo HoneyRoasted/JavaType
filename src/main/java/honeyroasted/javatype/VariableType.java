@@ -21,6 +21,14 @@ public class VariableType extends JavaType {
         this.effectiveType = upper.isEmpty() ? Object.class : JavaTypes.getCommonParent(upper.stream().map(JavaType::getType).collect(Collectors.toList()));
     }
 
+    public List<JavaType> getLower() {
+        return lower;
+    }
+
+    public List<JavaType> getUpper() {
+        return upper;
+    }
+
     public static Builder builder(String name) {
         return new Builder(name);
     }
@@ -28,6 +36,40 @@ public class VariableType extends JavaType {
     @Override
     public String getName() {
         return this.name;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder();
+        str.append(this.name);
+
+        if (!this.upper.isEmpty()) {
+            str.append(" extends ");
+
+            for (int i = 0; i < this.upper.size(); i++) {
+                str.append(this.upper.get(i));
+                if (i != this.upper.size() - 1) {
+                    str.append(" & ");
+                }
+            }
+
+            if (!this.lower.isEmpty()) {
+                str.append(" |");
+            }
+        }
+
+        if (!this.lower.isEmpty()) {
+            str.append(" super ");
+
+            for (int i = 0; i < this.lower.size(); i++) {
+                str.append(this.lower.get(i));
+                if (i != this.lower.size() - 1) {
+                    str.append(" & ");
+                }
+            }
+        }
+
+        return str.toString();
     }
 
     @Override
