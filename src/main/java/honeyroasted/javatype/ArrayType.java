@@ -1,6 +1,7 @@
 package honeyroasted.javatype;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class ArrayType extends JavaType {
     private Class<?> effectiveType;
@@ -11,6 +12,8 @@ public class ArrayType extends JavaType {
     private ArrayType(JavaType type, int dimensions) {
         if (dimensions <= 0) {
             throw new IllegalArgumentException("Array dimension <= 0");
+        } else if (type.isArray()) {
+            throw new IllegalArgumentException("Array type within array");
         }
 
         this.type = type;
@@ -36,6 +39,24 @@ public class ArrayType extends JavaType {
 
     public JavaType getComponent() {
         return this.dimensions == 1 ? this.type : this.type.array(this.dimensions - 1);
+    }
+
+    @Override
+    public Optional<? extends JavaType> resolveToSupertype(Class<?> parent) {
+        if (this.type.isGeneric()) {
+            return JavaTypes.resolveGenericsToSupertype((GenericType) this.type, parent).map(g -> g.array(this.dimensions));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<? extends JavaType> resolveToSubtype(Class<?> sub) {
+        if (this.type.isGeneric()) {
+            return JavaTypes.resolveGenericsToSubtype(sub, (GenericType) this.type).map(g -> g.array(this.dimensions));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

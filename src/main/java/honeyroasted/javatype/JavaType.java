@@ -1,5 +1,7 @@
 package honeyroasted.javatype;
 
+import java.util.Optional;
+
 public abstract class JavaType {
 
     public abstract String getName();
@@ -26,6 +28,14 @@ public abstract class JavaType {
 
     public JavaType unbox() {
         return this;
+    }
+
+    public Optional<? extends JavaType> resolveToSupertype(Class<?> parent) {
+        return Optional.empty();
+    }
+
+    public Optional<? extends JavaType> resolveToSubtype(Class<?> sub) {
+        return Optional.empty();
     }
 
     public boolean isArray() {
