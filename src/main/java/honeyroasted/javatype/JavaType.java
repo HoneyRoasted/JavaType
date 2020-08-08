@@ -22,6 +22,10 @@ public abstract class JavaType {
         return getType().isPrimitive();
     }
 
+    public boolean isNumericPrimitive() {
+        return getType().isPrimitive() && !getType().equals(boolean.class) && !getType().equals(void.class);
+    }
+
     public JavaType box() {
         return this;
     }
