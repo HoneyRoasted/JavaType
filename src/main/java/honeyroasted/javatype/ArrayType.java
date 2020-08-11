@@ -60,6 +60,26 @@ public class ArrayType extends JavaType {
     }
 
     @Override
+    public JavaType resolveVariables(GenericType filledType, GenericType paramedType, MethodType filledMethod, MethodType paramedMethod) {
+        return this.type.resolveVariables(filledType, paramedType, filledMethod, paramedMethod).array(this.dimensions);
+    }
+
+    @Override
+    public JavaType resolveVariables(GenericType filledType, GenericType paramedType) {
+        return this.type.resolveVariables(filledType, paramedType).array(this.dimensions);
+    }
+
+    @Override
+    public boolean isAssignableTo(JavaType other) {
+        return other instanceof ArrayType && this.dimensions == ((ArrayType) other).dimensions && this.type.isAssignableTo(((ArrayType) other).type);
+    }
+
+    @Override
+    public boolean isAssignableTo(JavaType other, int depth) {
+        return other instanceof ArrayType && this.dimensions == ((ArrayType) other).dimensions && this.type.isAssignableTo(((ArrayType) other).type, depth);
+    }
+
+    @Override
     public String getName() {
         StringBuilder name = new StringBuilder();
         name.append(this.type.getName());
@@ -87,90 +107,6 @@ public class ArrayType extends JavaType {
     @Override
     public JavaType array(int dimensions) {
         return this.dimensions + dimensions == 0 ? this.type : ArrayType.of(this.type, this.dimensions + dimensions);
-    }
-
-    @Override
-    public boolean isStrictlyAssignableTo(JavaType type) {
-        JavaType component;
-        int dimensions;
-        if (type instanceof ArrayType) {
-            component = ((ArrayType) type).type;
-            dimensions = ((ArrayType) type).dimensions;
-        } else {
-            component = type;
-            dimensions = 0;
-        }
-
-        if (dimensions == this.dimensions && this.type.isStrictlyAssignableTo(component)) {
-            return true;
-        } else if (dimensions < this.dimensions && component.equals(JavaTypes.OBJECT)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean isStrictlyAssignableFrom(JavaType type) {
-        JavaType component;
-        int dimensions;
-        if (type instanceof ArrayType) {
-            component = ((ArrayType) type).type;
-            dimensions = ((ArrayType) type).dimensions;
-        } else {
-            component = type;
-            dimensions = 0;
-        }
-
-        if (dimensions == this.dimensions && this.type.isStrictlyAssignableFrom(component)) {
-            return true;
-        } else if (dimensions > this.dimensions && this.type.equals(JavaTypes.OBJECT)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean isAssignableTo(JavaType type) {
-        JavaType component;
-        int dimensions;
-        if (type instanceof ArrayType) {
-            component = ((ArrayType) type).type;
-            dimensions = ((ArrayType) type).dimensions;
-        } else {
-            component = type;
-            dimensions = 0;
-        }
-
-        if (dimensions == this.dimensions && this.type.isAssignableTo(component)) {
-            return true;
-        } else if (dimensions < this.dimensions && component.equals(JavaTypes.OBJECT)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean isAssignableFrom(JavaType type) {
-        JavaType component;
-        int dimensions;
-        if (type instanceof ArrayType) {
-            component = ((ArrayType) type).type;
-            dimensions = ((ArrayType) type).dimensions;
-        } else {
-            component = type;
-            dimensions = 0;
-        }
-
-        if (dimensions == this.dimensions && this.type.isAssignableFrom(component)) {
-            return true;
-        } else if (dimensions > this.dimensions && this.type.equals(JavaTypes.OBJECT)) {
-            return true;
-        }
-
-        return false;
     }
 
     @Override

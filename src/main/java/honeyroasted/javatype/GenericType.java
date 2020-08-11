@@ -38,6 +38,102 @@ public class GenericType extends JavaType {
         }
     }
 
+    public JavaType resolveVariables(GenericType filledType, GenericType paramedType, MethodType filledMethod, MethodType paramedMethod) {
+        GenericType.Builder builder = GenericType.builder(this.type);
+        for (JavaType generic : this.getGenerics()) {
+            if (generic instanceof VariableType) {
+                String name = generic.getName();
+                builder.generic(filledMethod.resolveVar(name, paramedMethod).orElse(
+                        filledType.resolveVar(name, paramedType).orElse(generic.resolveVariables(filledType, paramedType, filledMethod, paramedMethod))));
+            } else {
+                builder.generic(generic.resolveVariables(filledType, paramedType, filledMethod, paramedMethod));
+            }
+        }
+
+        return builder.build();
+    }
+
+    @Override
+    public JavaType resolveVariables(GenericType filledType, GenericType paramedType) {
+        GenericType.Builder builder = GenericType.builder(this.type);
+        for (JavaType generic : this.getGenerics()) {
+            if (generic instanceof VariableType) {
+                String name = generic.getName();
+                builder.generic(filledType.resolveVar(name, paramedType).orElse(generic.resolveVariables(filledType, paramedType)));
+            } else {
+                builder.generic(generic.resolveVariables(filledType, paramedType));
+            }
+        }
+
+        return builder.build();
+    }
+
+    public Optional<JavaType> resolveVar(String var, GenericType parameterized) {
+        int index = -1;
+        for (int i = 0; i < parameterized.genericCount(); i++) {
+            JavaType type = parameterized.getGeneric(i);
+            if (type instanceof VariableType && type.getName().equals(var)) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index != -1) {
+            return Optional.of(this.getGeneric(index));
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean isAssignableTo(JavaType other) {
+        if (other instanceof GenericType) {
+            GenericType g = (GenericType) other;
+            if (!g.type.isAssignableFrom(this.type)) {
+                return false;
+            }
+
+            int size = Math.max(g.genericCount(), this.genericCount());
+            for (int i = 0; i < size; i++) {
+                if (!this.getGeneric(i).isAssignableTo(g.getGeneric(i), 0)) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (other instanceof VariableType) {
+            VariableType v = (VariableType) other;
+            return !v.getLower().isEmpty() && v.getLower().stream().anyMatch(this::isAssignableTo);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isAssignableTo(JavaType other, int depth) {
+        if (other instanceof GenericType) {
+            GenericType g = (GenericType) other;
+            if (!this.type.equals(g.type)) {
+                return false;
+            }
+
+            if (g.genericCount() != this.genericCount()) {
+                return false;
+            }
+
+            for (int i = 0; i < g.genericCount(); i++) {
+                if (!this.getGeneric(i).isAssignableTo(g.getGeneric(i), depth + 1)) {
+                    return false;
+                }
+            }
+
+            return true;
+        } else if (other instanceof VariableType && depth == 0) {
+            VariableType v = (VariableType) other;
+            return v.getUpper().stream().allMatch(t -> this.isAssignableTo(t, depth)) &&
+                    v.getLower().stream().anyMatch(t -> t.isAssignableTo(this, depth));
+        }
+        return false;
+    }
+
     @Override
     public String getName() {
         return this.type.getName();
@@ -93,98 +189,6 @@ public class GenericType extends JavaType {
 
     public Optional<GenericType> resolveToSubtype(Class<?> sub) {
         return JavaTypes.resolveGenericsToSubtype(sub, this);
-    }
-
-    @Override
-    public boolean isStrictlyAssignableTo(JavaType type) {
-        if (type instanceof GenericType) {
-            if (!type.getType().isAssignableFrom(this.type)) {
-                return false;
-            }
-
-            List<JavaType> other = ((GenericType) type).generics;
-
-            if (other.size() != this.generics.size()) {
-                return false;
-            }
-
-            for (int i = 0; i < other.size(); i++) {
-                if (!this.getGeneric(i).isStrictlyAssignableFrom(other.get(i))) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return type.isStrictlyAssignableFrom(this);
-        }
-    }
-
-    @Override
-    public boolean isStrictlyAssignableFrom(JavaType type) {
-        if (type instanceof GenericType) {
-            if (!this.type.isAssignableFrom(type.getType())) {
-                return false;
-            }
-
-            List<JavaType> other = ((GenericType) type).generics;
-
-            if (other.size() != this.generics.size()) {
-                return false;
-            }
-
-            for (int i = 0; i < other.size(); i++) {
-                if (!this.getGeneric(i).isStrictlyAssignableTo(other.get(i))) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return type.isStrictlyAssignableTo(this);
-        }
-    }
-
-    @Override
-    public boolean isAssignableTo(JavaType type) {
-        if (type instanceof GenericType) {
-            if (!type.getType().isAssignableFrom(this.type)) {
-                return false;
-            }
-
-            List<JavaType> other = ((GenericType) type).generics;
-            int limit = Math.min(other.size(), this.generics.size());
-            for (int i = 0; i < limit; i++) {
-                if (!this.getGeneric(i).isAssignableFrom(other.get(i))) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return type.isAssignableFrom(this);
-        }
-    }
-
-    @Override
-    public boolean isAssignableFrom(JavaType type) {
-        if (type instanceof GenericType) {
-            if (!this.type.isAssignableFrom(type.getType())) {
-                return false;
-            }
-
-            List<JavaType> other = ((GenericType) type).generics;
-
-            if (other.size() != this.generics.size()) {
-                return false;
-            }
-
-            for (int i = 0; i < other.size(); i++) {
-                if (!this.getGeneric(i).isAssignableTo(other.get(i))) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            return type.isAssignableTo(this);
-        }
     }
 
     public int genericCount() {

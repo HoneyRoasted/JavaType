@@ -2,6 +2,7 @@ package honeyroasted.javatype;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -15,6 +16,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public class JavaTypes {
+    public static final JavaType OBJECT = of(Object.class);
+    public static final JavaType VOID = of(void.class);
+
     private static Map<Class, Class> boxByPrimitives = new HashMap<>();
     private static Map<Class, Class> primitivesByBox = new HashMap<>();
     private static Map<String, Class> primitivesByName = new HashMap<>();
@@ -59,10 +63,6 @@ public class JavaTypes {
         return primitivesByBox.containsKey(box) ? primitivesByBox.get(box) : box;
     }
 
-    public static JavaType OBJECT = GenericType.of(Object.class);
-
-
-
     public static Class<?> getArrayType(Class<?> component, int dimensions) {
         return Array.newInstance(component, new int[dimensions]).getClass();
     }
@@ -89,6 +89,16 @@ public class JavaTypes {
         }
 
         return current.stream().filter(s -> cls.stream().allMatch(c -> s.isAssignableFrom(c))).findFirst().get();
+    }
+
+    public static MethodType of(Method method) {
+        MethodType.Builder builder = MethodType.builder(of(method.getGenericReturnType()));
+
+        for (Type type : method.getGenericParameterTypes()) {
+            builder.param(of(type));
+        }
+
+        return builder.build();
     }
 
     public static GenericType ofParameterized(Class<?> cls) {
@@ -141,7 +151,7 @@ public class JavaTypes {
                 Class cls = hierarchy.get(i);
                 Class sup = hierarchy.get(i + 1);
 
-                GenericType superclassParams = ofParameterized(cls);
+                GenericType superclassParams = ofParameterized(sup);
                 GenericType superclassFilled = (GenericType) of(getInherited(cls, sup).get());
 
                 for (int j = 0; j < superclassParams.genericCount(); j++) {

@@ -4,19 +4,19 @@ import java.util.Optional;
 
 public abstract class JavaType {
 
+    public abstract JavaType resolveVariables(GenericType filledType, GenericType paramedType, MethodType filledMethod, MethodType paramedMethod);
+
+    public abstract JavaType resolveVariables(GenericType filledType, GenericType paramedType);
+
+    public abstract boolean isAssignableTo(JavaType other);
+
+    public abstract boolean isAssignableTo(JavaType other, int depth);
+
     public abstract String getName();
 
     public abstract Class<?> getType();
 
     public abstract JavaType array(int dimensions);
-
-    public abstract boolean isStrictlyAssignableTo(JavaType type);
-
-    public abstract boolean isStrictlyAssignableFrom(JavaType type);
-
-    public abstract boolean isAssignableTo(JavaType type);
-
-    public abstract boolean isAssignableFrom(JavaType type);
 
     public boolean isPrimitive() {
         return getType().isPrimitive();

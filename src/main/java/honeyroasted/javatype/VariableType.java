@@ -34,6 +34,56 @@ public class VariableType extends JavaType {
     }
 
     @Override
+    public JavaType resolveVariables(GenericType filledType, GenericType paramedType, MethodType filledMethod, MethodType paramedMethod) {
+        VariableType.Builder builder = VariableType.builder(this.name);
+
+        for (JavaType upper : this.upper) {
+            builder.upper(upper.resolveVariables(filledType, paramedType, filledMethod, paramedMethod));
+        }
+
+        for (JavaType lower : this.lower) {
+            builder.lower(lower.resolveVariables(filledType, paramedType, filledMethod, paramedMethod));
+        }
+
+        return builder.build();
+    }
+
+    @Override
+    public JavaType resolveVariables(GenericType filledType, GenericType paramedType) {
+        VariableType.Builder builder = VariableType.builder(this.name);
+
+        for (JavaType upper : this.upper) {
+            builder.upper(upper.resolveVariables(filledType, paramedType));
+        }
+
+        for (JavaType lower : this.lower) {
+            builder.lower(lower.resolveVariables(filledType, paramedType));
+        }
+
+        return builder.build();
+    }
+
+    @Override
+    public boolean isAssignableTo(JavaType other) {
+        return !this.upper.isEmpty() && this.upper.stream().anyMatch(t -> t.isAssignableTo(other));
+    }
+
+    @Override
+    public boolean isAssignableTo(JavaType other, int depth) {
+        if (other instanceof VariableType) {
+            VariableType v = (VariableType) other;
+
+            if (this.getUpper().isEmpty()) {
+                return false;
+            }
+
+            return this.getUpper().stream().allMatch(t -> v.getUpper().stream().allMatch(t::isAssignableTo)) &&
+                    this.getLower().stream().allMatch(t -> v.isAssignableTo(t, depth));
+        }
+        return false;
+    }
+
+    @Override
     public String getName() {
         return this.name;
     }
@@ -80,26 +130,6 @@ public class VariableType extends JavaType {
     @Override
     public JavaType array(int dimensions) {
         return dimensions == 0 ? this : ArrayType.of(this, dimensions);
-    }
-
-    @Override
-    public boolean isStrictlyAssignableTo(JavaType type) {
-        return !this.upper.isEmpty() && this.upper.stream().anyMatch(t -> t.isStrictlyAssignableTo(type));
-    }
-
-    @Override
-    public boolean isStrictlyAssignableFrom(JavaType type) {
-        return !this.lower.isEmpty() && this.lower.stream().allMatch(t -> t.isStrictlyAssignableFrom(type));
-    }
-
-    @Override
-    public boolean isAssignableTo(JavaType type) {
-        return !this.upper.isEmpty() && this.upper.stream().anyMatch(t -> t.isAssignableTo(type));
-    }
-
-    @Override
-    public boolean isAssignableFrom(JavaType type) {
-        return !this.lower.isEmpty() && this.lower.stream().allMatch(t -> t.isAssignableFrom(type));
     }
 
     @Override
@@ -168,7 +198,8 @@ public class VariableType extends JavaType {
         }
 
         public VariableType build() {
-            return new VariableType(this.name, Collections.unmodifiableList(new ArrayList<>(this.upper)), Collections.unmodifiableList(new ArrayList<>(this.lower)));
+            return new VariableType(this.name, Collections.unmodifiableList(this.upper.stream().filter(j -> !j.equals(JavaTypes.OBJECT)).collect(Collectors.toList())),
+                    Collections.unmodifiableList(new ArrayList<>(this.lower)));
         }
     }
 }
