@@ -35,32 +35,36 @@ public class VariableType extends JavaType {
 
     @Override
     public JavaType resolveVariables(GenericType filledType, GenericType paramedType, MethodType filledMethod, MethodType paramedMethod) {
-        VariableType.Builder builder = VariableType.builder(this.name);
+        return filledType.resolveVar(this.name, paramedType).orElseGet(() -> {
+            VariableType.Builder builder = VariableType.builder(this.name);
 
-        for (JavaType upper : this.upper) {
-            builder.upper(upper.resolveVariables(filledType, paramedType, filledMethod, paramedMethod));
-        }
+            for (JavaType upper : this.upper) {
+                builder.upper(upper.resolveVariables(filledType, paramedType, filledMethod, paramedMethod));
+            }
 
-        for (JavaType lower : this.lower) {
-            builder.lower(lower.resolveVariables(filledType, paramedType, filledMethod, paramedMethod));
-        }
+            for (JavaType lower : this.lower) {
+                builder.lower(lower.resolveVariables(filledType, paramedType, filledMethod, paramedMethod));
+            }
 
-        return builder.build();
+            return builder.build();
+        });
     }
 
     @Override
     public JavaType resolveVariables(GenericType filledType, GenericType paramedType) {
-        VariableType.Builder builder = VariableType.builder(this.name);
+        return filledType.resolveVar(this.name, paramedType).orElseGet(() -> {
+            VariableType.Builder builder = VariableType.builder(this.name);
 
-        for (JavaType upper : this.upper) {
-            builder.upper(upper.resolveVariables(filledType, paramedType));
-        }
+            for (JavaType upper : this.upper) {
+                builder.upper(upper.resolveVariables(filledType, paramedType));
+            }
 
-        for (JavaType lower : this.lower) {
-            builder.lower(lower.resolveVariables(filledType, paramedType));
-        }
+            for (JavaType lower : this.lower) {
+                builder.lower(lower.resolveVariables(filledType, paramedType));
+            }
 
-        return builder.build();
+            return builder.build();
+        });
     }
 
     @Override
