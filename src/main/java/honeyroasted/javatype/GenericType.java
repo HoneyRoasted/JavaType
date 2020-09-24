@@ -129,7 +129,7 @@ public class GenericType extends JavaType {
         } else if (other instanceof VariableType && depth == 0) {
             VariableType v = (VariableType) other;
             return v.getUpper().stream().allMatch(t -> this.isAssignableTo(t, depth)) &&
-                    v.getLower().stream().anyMatch(t -> t.isAssignableTo(this, depth));
+                    (v.getLower().stream().anyMatch(t -> t.isAssignableTo(this, depth)) || v.getLower().isEmpty());
         }
         return false;
     }
